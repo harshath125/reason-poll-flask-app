@@ -1,0 +1,104 @@
+{% extends "layout.html" %}
+
+{% block title %}Results: {{ poll.question }}{% endblock %}
+
+{% block content %}
+<div class="text-center mb-10">
+    <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-white drop-shadow-lg">{{ poll.question }}</h1>
+    <p class="mt-3 text-lg text-cyan-200">A total of <span class="font-bold text-white">{{ total_votes }}</span> votes have been cast.</p>
+</div>
+
+<!-- Main Results Chart -->
+<div class="bg-black/30 backdrop-blur-md p-6 rounded-xl shadow-2xl border border-white/10 mb-10">
+    <h2 class="text-2xl font-bold text-center mb-4 text-white">Overall Vote Distribution</h2>
+    <div class="max-w-2xl mx-auto">
+        <canvas id="voteCountsChart"></canvas>
+    </div>
+</div>
+
+<!-- Per-Option Analysis Section -->
+<div>
+    <h2 class="text-3xl font-bold text-center mb-8 text-white">Analysis by Option</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-{{ poll.get_options_list()|length if poll.get_options_list()|length <= 3 else 3 }} gap-8">
+        
+        {% for option in poll.get_options_list() %}
+        <div class="flex flex-col bg-black/30 backdrop-blur-md rounded-2xl shadow-2xl border border-white/10 overflow-hidden">
+            <div class="p-6">
+                <h3 class="text-2xl font-bold text-center text-cyan-300">{{ option }}</h3>
+                <p class="text-center text-white font-bold text-4xl my-4">{{ vote_counts[option] }} <span class="text-lg font-normal text-gray-300">Votes</span></p>
+                <div class="h-48">
+                    <canvas id="sentimentChart-{{ loop.index }}"></canvas>
+                </div>
+            </div>
+            <div class="bg-black/40 p-6 mt-auto">
+                <h4 class="text-lg font-semibold text-white mb-2">📊 Detailed View</h4>
+                <p class="text-gray-300 text-sm leading-relaxed">
+                    {{ option_summaries[option]|safe }}
+                </p>
+            </div>
+        </div>
+        {% endfor %}
+
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Overall Votes Chart
+    const voteCountsData = JSON.parse('{{ vote_counts_json|safe }}');
+    const voteCtx = document.getElementById('voteCountsChart').getContext('2d');
+    new Chart(voteCtx, {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(voteCountsData),
+            datasets: [{
+                label: 'Votes',
+                data: Object.values(voteCountsData),
+                backgroundColor: ['rgba(0, 255, 255, 0.7)', 'rgba(65, 105, 225, 0.7)', 'rgba(236, 72, 153, 0.7)', 'rgba(168, 85, 247, 0.7)'],
+                borderColor: '#1e293b',
+                borderWidth: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'top', labels: { color: '#cbd5e1', font: { size: 14 } } } }
+        }
+    });
+
+    // Per-Option Sentiment Charts
+    const sentimentData = JSON.parse('{{ sentiment_data_json|safe }}');
+    const options = {{ poll.get_options_list()|tojson }};
+
+    options.forEach((option, index) => {
+        const sentimentCtx = document.getElementById(`sentimentChart-${index + 1}`).getContext('2d');
+        const optionSentiment = sentimentData[option];
+        new Chart(sentimentCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Positive', 'Neutral', 'Negative'],
+                datasets: [{
+                    label: 'Sentiment Count',
+                    data: [optionSentiment.Positive, optionSentiment.Neutral, optionSentiment.Negative],
+                    backgroundColor: ['rgba(74, 222, 128, 0.7)', 'rgba(156, 163, 175, 0.7)', 'rgba(239, 68, 68, 0.7)'],
+                    borderColor: ['rgba(74, 222, 128, 1)', 'rgba(156, 163, 175, 1)', 'rgba(239, 68, 68, 1)'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                scales: {
+                    x: { beginAtZero: true, ticks: { color: '#94a3b8', stepSize: 1 }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+                    y: { ticks: { color: '#cbd5e1' }, grid: { display: false } }
+                },
+                plugins: {
+                    legend: { display: false },
+                    title: { display: true, text: 'Sentiment Breakdown', color: '#e2e8f0', font: { size: 16 } }
+                }
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

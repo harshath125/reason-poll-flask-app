@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+
+{% block title %}Login - ReasonPoll{% endblock %}
+
+{% block content %}
+<div class="bg-black/30 backdrop-blur-md p-8 rounded-xl shadow-2xl max-w-md mx-auto border border-white/10">
+    <h1 class="text-3xl font-bold text-center mb-6 text-white">Login to Your Account</h1>
+    <form method="POST" action="{{ url_for('login') }}" class="space-y-6">
+        <div>
+            <label for="username" class="block text-lg font-medium text-cyan-200 mb-2">Username</label>
+            <input type="text" name="username" id="username" required class="w-full px-4 py-2 bg-black/20 border border-white/20 rounded-lg text-white focus:ring-neon-cyan focus:border-neon-cyan">
+        </div>
+        <div>
+            <label for="password" class="block text-lg font-medium text-cyan-200 mb-2">Password</label>
+            <input type="password" name="password" id="password" required class="w-full px-4 py-2 bg-black/20 border border-white/20 rounded-lg text-white focus:ring-neon-cyan focus:border-neon-cyan">
+        </div>
+        <div class="pt-4">
+            <button type="submit" class="w-full bg-gradient-to-r from-royal-blue to-neon-cyan text-black font-bold py-3 px-6 rounded-lg hover:opacity-90 transition-opacity text-lg shadow-lg">
+                Login
+            </button>
+        </div>
+    </form>
+    <p class="text-center text-gray-400 mt-6">
+        Don't have an account? <a href="{{ url_for('register') }}" class="font-semibold text-cyan-300 hover:underline">Register here</a>.
+    </p>
+</div>
+{% endblock %}

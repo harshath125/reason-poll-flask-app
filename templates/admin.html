@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+
+{% block title %}Create a New Poll{% endblock %}
+
+{% block content %}
+<div class="bg-black/30 backdrop-blur-md p-8 rounded-xl shadow-2xl max-w-2xl mx-auto border border-white/10">
+    <h1 class="text-3xl font-bold text-center mb-6 text-white">Create a New Poll</h1>
+    <form action="{{ url_for('admin') }}" method="POST" class="space-y-6">
+        <div>
+            <label for="question" class="block text-lg font-medium text-cyan-200 mb-2">Poll Question</label>
+            <input type="text" name="question" id="question" required class="w-full px-4 py-2 bg-black/20 border border-white/20 rounded-lg text-white focus:ring-neon-cyan focus:border-neon-cyan" placeholder="e.g., Should we adopt a 4-day work week?">
+        </div>
+        <div>
+            <label for="options" class="block text-lg font-medium text-cyan-200 mb-2">Options (comma-separated)</label>
+            <input type="text" name="options" id="options" required class="w-full px-4 py-2 bg-black/20 border border-white/20 rounded-lg text-white focus:ring-neon-cyan focus:border-neon-cyan" placeholder="e.g., Yes, No, Trial Period First">
+            <p class="text-sm text-gray-400 mt-2">Enter at least two options, separated by a comma.</p>
+        </div>
+        <div class="pt-4">
+            <button type="submit" class="w-full bg-gradient-to-r from-royal-blue to-neon-cyan text-black font-bold py-3 px-6 rounded-lg hover:opacity-90 transition-opacity text-lg shadow-lg">
+                Launch Poll
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
