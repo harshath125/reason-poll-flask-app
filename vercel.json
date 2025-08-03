@@ -2,15 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "reasonpoll/app.py",
-      "use": "@vercel/python",
-      "config": { "maxLambdaSize": "15mb" }
+      "src": "app.py",
+      "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "reasonpoll/app.py"
+      "dest": "app.py"
     }
   ]
 }
