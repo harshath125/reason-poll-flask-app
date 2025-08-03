@@ -1,4 +1,4 @@
-# Ignore environment files
+# Ignore environment files with secrets
 .env
 
 # Ignore Python cache files
