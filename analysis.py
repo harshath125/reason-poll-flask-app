@@ -1,7 +1,6 @@
 from textblob import TextBlob
 from collections import Counter
 
-# --- NEW: Local Summary Generation Function ---
 def generate_option_summary(option_name, reasons_list):
     """
     Generates a simple, non-AI summary for a specific poll option based on local analysis.

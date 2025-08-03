@@ -9,16 +9,17 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 
 load_dotenv()
 
+# ---- APP SETUP ----
 app = Flask(__name__)
 
-app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'a-very-secret-key-for-dev')
-
+app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'a-very-secret-key')
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'reasonpoll.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 
+# --- FLASK-LOGIN SETUP ---
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
@@ -30,41 +31,7 @@ def load_user(user_id):
 with app.app_context():
     db.create_all()
 
-# --- MODIFIED: The results route now generates a summary for each option ---
-@app.route("/results/<int:poll_id>")
-def results(poll_id):
-    poll = Poll.query.get_or_404(poll_id)
-    responses = poll.responses
-    total_votes = len(responses)
-    options = poll.get_options_list()
-    
-    vote_counts = {option: 0 for option in options}
-    sentiment_data = {option: {"Positive": 0, "Negative": 0, "Neutral": 0} for option in options}
-    reasons_by_option = {option: [] for option in options}
-
-    for response in responses:
-        if response.selected_option in options:
-            vote_counts[response.selected_option] += 1
-            sentiment_data[response.selected_option][response.sentiment] += 1
-            if response.reason_text:
-                reasons_by_option[response.selected_option].append(response.reason_text)
-
-    # --- NEW: Generate a local summary for each option ---
-    option_summaries = {}
-    for option, reasons in reasons_by_option.items():
-        option_summaries[option] = generate_option_summary(option, reasons)
-
-    vote_counts_json = json.dumps(vote_counts)
-    sentiment_data_json = json.dumps(sentiment_data)
-
-    return render_template(
-        "result.html", poll=poll, total_votes=total_votes, vote_counts=vote_counts,
-        vote_counts_json=vote_counts_json, sentiment_data_json=sentiment_data_json,
-        option_summaries=option_summaries
-    )
-
-# (All other routes remain the same)
-# ...
+# ---- AUTHENTICATION ROUTES ----
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated: return redirect(url_for('home'))
@@ -105,6 +72,7 @@ def logout():
     logout_user()
     return redirect(url_for('home'))
 
+# ---- CORE APPLICATION ROUTES ----
 @app.route("/")
 def home():
     polls = Poll.query.order_by(Poll.created_at.desc()).all()
@@ -134,8 +102,40 @@ def vote(poll_id):
         db.session.add(new_response)
         db.session.commit()
         flash("Your vote has been counted. Thank you!", "success")
-        return redirect(url_for("results", poll_id=poll_id))
+        return redirect(url_for("results", poll_id=poll.id))
     return render_template("vote.html", poll=poll)
+
+@app.route("/results/<int:poll_id>")
+def results(poll_id):
+    poll = Poll.query.get_or_404(poll_id)
+    responses = poll.responses
+    total_votes = len(responses)
+    options = poll.get_options_list()
+    
+    vote_counts = {option: 0 for option in options}
+    sentiment_data = {option: {"Positive": 0, "Negative": 0, "Neutral": 0} for option in options}
+    reasons_by_option = {option: [] for option in options}
+
+    for response in responses:
+        if response.selected_option in options:
+            vote_counts[response.selected_option] += 1
+            sentiment_data[response.selected_option][response.sentiment] += 1
+            if response.reason_text:
+                reasons_by_option[response.selected_option].append(response.reason_text)
+
+    # --- Generate a local summary for each option ---
+    option_summaries = {}
+    for option, reasons in reasons_by_option.items():
+        option_summaries[option] = generate_option_summary(option, reasons)
+
+    vote_counts_json = json.dumps(vote_counts)
+    sentiment_data_json = json.dumps(sentiment_data)
+
+    return render_template(
+        "result.html", poll=poll, total_votes=total_votes, vote_counts=vote_counts,
+        vote_counts_json=vote_counts_json, sentiment_data_json=sentiment_data_json,
+        option_summaries=option_summaries
+    )
 
 @app.route("/admin", methods=["GET", "POST"])
 @login_required
